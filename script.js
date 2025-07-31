@@ -1,18 +1,26 @@
 document.addEventListener('DOMContentLoaded', function() {
     
-    // --- FUNGSI PENYIMPANAN DAN PEMUATAN DATA ---
+    // --- KONFIGURASI DAN INISIALISASI FIREBASE ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyAQHj9r8c57128AvWT-o7ha3AbPy4W-0xI",
+        authDomain: "datastaffupv2.firebaseapp.com",
+        projectId: "datastaffupv2",
+        storageBucket: "datastaffupv2.appspot.com", // Koreksi: ganti firebasestorage menjadi appspot
+        messagingSenderId: "754508864683",
+        appId: "1:754508864683:web:5fd4e6a5f7205729946bee",
+        measurementId: "G-D3RH1HY3VB"
+    };
 
-    function saveDataToLocalStorage() {
-        localStorage.setItem('togelupStaffData', JSON.stringify(staffData));
-    }
+    // Inisialisasi Firebase
+    firebase.initializeApp(firebaseConfig);
+    firebase.analytics();
 
-    function loadDataFromLocalStorage() {
-        const data = localStorage.getItem('togelupStaffData');
-        return data ? JSON.parse(data) : [];
-    }
+    // Inisialisasi Firestore
+    const db = firebase.firestore();
+    const staffCollection = db.collection('staff');
 
-    // --- INISIALISASI DATA ---
-    let staffData = loadDataFromLocalStorage();
+    // --- STATE APLIKASI ---
+    let staffData = []; // Data akan dimuat dari Firestore
     let currentFilter = 'all';
 
     // --- DOM ELEMENT SELECTION ---
@@ -72,6 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             filteredData.forEach((staff, index) => {
                 const row = document.createElement('tr');
+                // Gunakan ID dari Firestore untuk atribut data-id
                 row.innerHTML = `<td>${index + 1}</td><td>${staff.nama}</td><td>${staff.passport}</td><td>${staff.jabatan}</td><td>${staff.email}</td><td>${calculateMasaJabatan(staff.tanggal_bergabung)}</td><td>${staff.last_admin || '-'}</td><td><button class="action-btn" data-id="${staff.id}">Edit</button></td>`;
                 tableBody.appendChild(row);
             });
@@ -82,6 +91,19 @@ document.addEventListener('DOMContentLoaded', function() {
     function openModal(modal) { modal.classList.remove('hidden'); }
     function closeModal(modal) { modal.classList.add('hidden'); }
 
+    // --- SINKRONISASI REAL-TIME DENGAN FIRESTORE ---
+    staffCollection.onSnapshot(snapshot => {
+        console.log("Menerima pembaruan dari Firestore...");
+        staffData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Urutkan data berdasarkan nama untuk konsistensi
+        staffData.sort((a, b) => a.nama.localeCompare(b.nama));
+        updateDashboard();
+    }, error => {
+        console.error("Gagal mengambil data dari Firestore: ", error);
+        alert("Tidak dapat terhubung ke database. Cek koneksi internet dan konfigurasi Firebase Anda.");
+    });
+
+    // --- EVENT LISTENERS ---
     menuLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
@@ -99,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     tableBody.addEventListener('click', (e) => {
         if (e.target.matches('.action-btn')) {
-            const staffId = parseInt(e.target.getAttribute('data-id'));
+            const staffId = e.target.getAttribute('data-id'); // ID sekarang adalah string dari Firestore
             const staff = staffData.find(s => s.id === staffId);
             if (staff) {
                 document.getElementById('edit-staff-id').value = staff.id;
@@ -116,56 +138,57 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('save-new-staff-btn').addEventListener('click', () => {
         const newStaff = {
-            id: staffData.length > 0 ? Math.max(...staffData.map(s => s.id)) + 1 : 1,
             nama: document.getElementById('add-nama').value,
             passport: document.getElementById('add-passport').value,
             jabatan: document.getElementById('add-jabatan').value,
             email: document.getElementById('add-email').value,
             tanggal_bergabung: document.getElementById('add-tanggal-bergabung').value,
             status: 'aktif',
-            last_admin: document.getElementById('add-admin').value
+            last_admin: document.getElementById('add-admin').value,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp() // Tambahkan timestamp
         };
         if (!newStaff.nama || !newStaff.passport || !newStaff.email || !newStaff.tanggal_bergabung || !newStaff.last_admin) {
             alert("Harap isi semua field."); return;
         }
-        staffData.push(newStaff);
-        saveDataToLocalStorage();
-        closeModal(addModal);
-        updateDashboard();
+        
+        // Simpan ke Firestore
+        staffCollection.add(newStaff).then(() => {
+            console.log("Staff baru berhasil ditambahkan!");
+            closeModal(addModal);
+            // Tampilan akan diperbarui secara otomatis oleh onSnapshot
+        }).catch(error => {
+            console.error("Gagal menyimpan staff baru: ", error);
+            alert("Gagal menyimpan data ke database.");
+        });
     });
     document.getElementById('cancel-add-btn').addEventListener('click', () => closeModal(addModal));
     document.getElementById('close-add-modal').addEventListener('click', () => closeModal(addModal));
 
     document.getElementById('save-changes-btn').addEventListener('click', () => {
-        const staffId = parseInt(document.getElementById('edit-staff-id').value);
-        const staffIndex = staffData.findIndex(s => s.id === staffId);
-        if (staffIndex > -1) {
-            staffData[staffIndex].nama = document.getElementById('edit-nama').value;
-            staffData[staffIndex].passport = document.getElementById('edit-passport').value;
-            staffData[staffIndex].jabatan = document.getElementById('edit-jabatan').value;
-            staffData[staffIndex].email = document.getElementById('edit-email').value;
-            staffData[staffIndex].tanggal_bergabung = document.getElementById('edit-tanggal-bergabung').value;
-            staffData[staffIndex].last_admin = document.getElementById('edit-admin').value;
-        }
-        saveDataToLocalStorage();
-        closeModal(editModal);
-        updateDashboard();
+        const staffId = document.getElementById('edit-staff-id').value;
+        if (!staffId) return;
+
+        const updatedData = {
+            nama: document.getElementById('edit-nama').value,
+            passport: document.getElementById('edit-passport').value,
+            jabatan: document.getElementById('edit-jabatan').value,
+            email: document.getElementById('edit-email').value,
+            tanggal_bergabung: document.getElementById('edit-tanggal-bergabung').value,
+            last_admin: document.getElementById('edit-admin').value
+        };
+
+        // Update data di Firestore
+        staffCollection.doc(staffId).update(updatedData).then(() => {
+            console.log("Data staff berhasil diperbarui!");
+            closeModal(editModal);
+            // Tampilan akan diperbarui secara otomatis oleh onSnapshot
+        }).catch(error => {
+            console.error("Gagal memperbarui data: ", error);
+            alert("Gagal memperbarui data di database.");
+        });
     });
     document.getElementById('cancel-edit-btn').addEventListener('click', () => closeModal(editModal));
     document.getElementById('close-edit-modal').addEventListener('click', () => closeModal(editModal));
 
-    // --- [LOGIKA BARU] SINKRONISASI ANTAR TAB ---
-    window.addEventListener('storage', function(event) {
-        // Cek apakah data yang berubah adalah data staff kita
-        if (event.key === 'togelupStaffData') {
-            console.log("Perubahan terdeteksi dari tab lain, memuat ulang data...");
-            // Muat ulang data dari localStorage yang baru
-            staffData = loadDataFromLocalStorage();
-            // Perbarui tampilan di tab ini
-            updateDashboard();
-        }
-    });
-
-    // --- INITIAL RENDER ---
-    updateDashboard();
+    // Tidak perlu lagi event listener 'storage' karena Firestore menangani sinkronisasi
 });
