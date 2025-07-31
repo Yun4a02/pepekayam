@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Staff - TOGELUP</title>
+    <title>Data Staff - TOGELUP (Firebase)</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
@@ -53,16 +53,18 @@
     </div>
 
     <!-- Modals -->
-    <div id="addModal" class="modal hidden">...</div>
-    <div id="editModal" class="modal hidden">...</div>
+    <div id="addModal" class="modal hidden">
+        <div class="modal-content"><div class="modal-header"><h3>Tambah Staff Baru</h3><span class="close-button" id="close-add-modal">×</span></div><div class="modal-body"><form id="addForm"><div class="form-grid"><div class="form-group"><label for="add-nama">Nama Staff</label><input type="text" id="add-nama" required></div><div class="form-group"><label for="add-passport">No. Passport</label><input type="text" id="add-passport" required></div><div class="form-group"><label for="add-jabatan">Jabatan</label><input type="text" id="add-jabatan"></div><div class="form-group"><label for="add-email">Email Kerja</label><input type="email" id="add-email" required></div><div class="form-group"><label for="add-tanggal-bergabung">Tanggal Bergabung</label><input type="text" id="add-tanggal-bergabung" placeholder="Contoh: 20 Dec 2020" required></div><div class="form-group form-group-full"><label for="add-admin">Nama Admin</label><input type="text" id="add-admin" required></div></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" id="cancel-add-btn">Batal</button><button type="button" class="btn btn-primary" id="save-new-staff-btn">Simpan Staff</button></div></div>
+    </div>
+    <div id="editModal" class="modal hidden">
+         <div class="modal-content"><div class="modal-header"><h3>Edit Data Staff</h3><span class="close-button" id="close-edit-modal">×</span></div><div class="modal-body"><form id="editForm"><input type="hidden" id="edit-staff-id"><div class="form-grid"><div class="form-group"><label for="edit-nama">Nama Staf</label><input type="text" id="edit-nama"></div><div class="form-group"><label for="edit-passport">No. Passport</label><input type="text" id="edit-passport"></div><div class="form-group"><label for="edit-jabatan">Jabatan</label><input type="text" id="edit-jabatan"></div><div class="form-group"><label for="edit-email">Email Kerja</label><input type="email" id="edit-email"></div><div class="form-group"><label for="edit-tanggal-bergabung">Tanggal Bergabung</label><input type="text" id="edit-tanggal-bergabung" placeholder="Contoh: 20 Dec 2020"></div><div class="form-group form-group-full"><label for="edit-admin">Admin</label><input type="text" id="edit-admin"></div></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" id="cancel-edit-btn">Batal</button><button type="button" class="btn btn-primary" id="save-changes-btn">Simpan Perubahan</button></div></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
     
-    <script>
-        // [PERUBAHAN DI SINI] Input tanggal diubah menjadi type="text"
-        document.getElementById('addModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h3>Tambah Staff Baru</h3><span class="close-button" id="close-add-modal">×</span></div><div class="modal-body"><form id="addForm"><div class="form-grid"><div class="form-group"><label for="add-nama">Nama Staff</label><input type="text" id="add-nama" required></div><div class="form-group"><label for="add-passport">No. Passport</label><input type="text" id="add-passport" required></div><div class="form-group"><label for="add-jabatan">Jabatan</label><input type="text" id="add-jabatan"></div><div class="form-group"><label for="add-email">Email Kerja</label><input type="email" id="add-email" required></div><div class="form-group"><label for="add-tanggal-bergabung">Tanggal Bergabung</label><input type="text" id="add-tanggal-bergabung" placeholder="Contoh: 20 Dec 2020" required></div><div class="form-group form-group-full"><label for="add-admin">Nama Admin</label><input type="text" id="add-admin" required></div></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" id="cancel-add-btn">Batal</button><button type="button" class="btn btn-primary" id="save-new-staff-btn">Simpan Staff</button></div></div>`;
-        
-        // [PERUBAHAN DI SINI] Input tanggal diubah menjadi type="text"
-        document.getElementById('editModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h3>Edit Data Staff</h3><span class="close-button" id="close-edit-modal">×</span></div><div class="modal-body"><form id="editForm"><input type="hidden" id="edit-staff-id"><div class="form-grid"><div class="form-group"><label for="edit-nama">Nama Staf</label><input type="text" id="edit-nama"></div><div class="form-group"><label for="edit-passport">No. Passport</label><input type="text" id="edit-passport"></div><div class="form-group"><label for="edit-jabatan">Jabatan</label><input type="text" id="edit-jabatan"></div><div class="form-group"><label for="edit-email">Email Kerja</label><input type="email" id="edit-email"></div><div class="form-group"><label for="edit-tanggal-bergabung">Tanggal Bergabung</label><input type="text" id="edit-tanggal-bergabung" placeholder="Contoh: 20 Dec 2020"></div><div class="form-group form-group-full"><label for="edit-admin">Admin</label><input type="text" id="edit-admin"></div></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" id="cancel-edit-btn">Batal</button><button type="button" class="btn btn-primary" id="save-changes-btn">Simpan Perubahan</button></div></div>`;
-    </script>
     <script src="script.js"></script>
 </body>
 </html>
