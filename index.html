@@ -10,9 +10,12 @@
 <body>
 
     <div class="app-layout">
+        <!-- ===== SIDEBAR ===== -->
         <nav class="sidebar">
             <div>
-                <div class="sidebar-header"><img src="https://i.imgur.com/7BPC6i7.png" alt="Logo" class="logo"></div>
+                <div class="sidebar-header">
+                    <img src="https://i.imgur.com/7BPC6i7.png" alt="Logo" class="logo">
+                </div>
                 <ul class="menu-list">
                     <li><a href="#" class="active" data-filter="all"><i data-feather="grid"></i><span>Dashboard</span></a></li>
                     <li><a href="#" data-filter="cs"><i data-feather="users"></i><span>CS</span></a></li>
@@ -23,8 +26,11 @@
             </div>
         </nav>
 
+        <!-- ===== KONTEN UTAMA ===== -->
         <main class="content">
-            <header class="content-header"><h1 id="dashboard-title">DATA STAFF TOGELUP</h1></header>
+            <header class="content-header">
+                <h1 id="dashboard-title">DATA STAFF TOGELUP</h1>
+            </header>
             <section class="metrics-grid">
                 <div class="metric-card"><h4>Total Staff CS</h4><p id="total-cs-summary">0</p></div>
                 <div class="metric-card"><h4>Total Staff KAPTEN</h4><p id="total-kapten-summary">0</p></div>
@@ -50,16 +56,13 @@
     <div id="addModal" class="modal hidden">...</div>
     <div id="editModal" class="modal hidden">...</div>
     
-    <!-- [PERUBAHAN] Ganti script modal dengan yang baru ini -->
     <script>
+        // [PERUBAHAN DI SINI] Input tanggal diubah menjadi type="text"
         document.getElementById('addModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h3>Tambah Staff Baru</h3><span class="close-button" id="close-add-modal">×</span></div><div class="modal-body"><form id="addForm"><div class="form-grid"><div class="form-group"><label for="add-nama">Nama Staff</label><input type="text" id="add-nama" required></div><div class="form-group"><label for="add-passport">No. Passport</label><input type="text" id="add-passport" required></div><div class="form-group"><label for="add-jabatan">Jabatan</label><input type="text" id="add-jabatan"></div><div class="form-group"><label for="add-email">Email Kerja</label><input type="email" id="add-email" required></div><div class="form-group"><label for="add-tanggal-bergabung">Tanggal Bergabung</label><input type="text" id="add-tanggal-bergabung" placeholder="Contoh: 20 Dec 2020" required></div><div class="form-group form-group-full"><label for="add-admin">Nama Admin</label><input type="text" id="add-admin" required></div></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" id="cancel-add-btn">Batal</button><button type="button" class="btn btn-primary" id="save-new-staff-btn">Simpan Staff</button></div></div>`;
-        document.getElementById('editModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h3>Edit Data Staff</h3><span class="close-button" id="close-edit-modal">×</span></div><div class="modal-body"><form id="editForm"><input type="hidden" id="edit-staff-id"><div class="form-grid"><div class="form-group"><label for="edit-nama">Nama Staf</label><input type="text" id="edit-nama"></div><div class="form-group"><label for="edit-passport">No. Passport</label><input type="text" id="edit-passport"></div><div class="form-group"><label for="edit-jabatan">Jabatan</label><input type="text" id="edit-jabatan"></div><div class="form-group"><label for="edit-email">Email Kerja</label><input type="email" id="edit-email"></div><div class="form-group"><label for="edit-tanggal-bergabung">Tanggal Bergabung</label><input type="text" id="edit-tanggal-bergabung" placeholder="Contoh: 20 Dec 2020"></div><div class="form-group form-group-full"><label for="edit-admin">Admin</label><input type="text" id="edit-admin"></div></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger" id="delete-staff-btn">Hapus Staff</button><button type="button" class="btn btn-secondary" id="cancel-edit-btn">Batal</button><button type="button" class="btn btn-primary" id="save-changes-btn">Simpan Perubahan</button></div></div>`;
+        
+        // [PERUBAHAN DI SINI] Input tanggal diubah menjadi type="text"
+        document.getElementById('editModal').innerHTML = `<div class="modal-content"><div class="modal-header"><h3>Edit Data Staff</h3><span class="close-button" id="close-edit-modal">×</span></div><div class="modal-body"><form id="editForm"><input type="hidden" id="edit-staff-id"><div class="form-grid"><div class="form-group"><label for="edit-nama">Nama Staf</label><input type="text" id="edit-nama"></div><div class="form-group"><label for="edit-passport">No. Passport</label><input type="text" id="edit-passport"></div><div class="form-group"><label for="edit-jabatan">Jabatan</label><input type="text" id="edit-jabatan"></div><div class="form-group"><label for="edit-email">Email Kerja</label><input type="email" id="edit-email"></div><div class="form-group"><label for="edit-tanggal-bergabung">Tanggal Bergabung</label><input type="text" id="edit-tanggal-bergabung" placeholder="Contoh: 20 Dec 2020"></div><div class="form-group form-group-full"><label for="edit-admin">Admin</label><input type="text" id="edit-admin"></div></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" id="cancel-edit-btn">Batal</button><button type="button" class="btn btn-primary" id="save-changes-btn">Simpan Perubahan</button></div></div>`;
     </script>
-    
-    <!-- [PERUBAHAN] Tambahkan Library Firebase sebelum script.js -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
     <script src="script.js"></script>
 </body>
 </html>
