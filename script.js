@@ -1,18 +1,22 @@
 document.addEventListener('DOMContentLoaded', function() {
     
-    // --- FUNGSI PENYIMPANAN DAN PEMUATAN DATA ---
+    // --- [PERUBAHAN 1] INISIALISASI FIREBASE ---
+    // PASTE KODE firebaseConfig ANDA YANG SUDAH DICOPY DI SINI
+    const firebaseConfig = {
+      apiKey: "AIzaSy...",
+      authDomain: "...",
+      projectId: "...",
+      storageBucket: "...",
+      messagingSenderId: "...",
+      appId: "..."
+    };
 
-    function saveDataToLocalStorage() {
-        localStorage.setItem('togelupStaffData', JSON.stringify(staffData));
-    }
-
-    function loadDataFromLocalStorage() {
-        const data = localStorage.getItem('togelupStaffData');
-        return data ? JSON.parse(data) : [];
-    }
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore(); // Membuat koneksi ke Firestore Database
 
     // --- INISIALISASI DATA ---
-    let staffData = loadDataFromLocalStorage();
+    let staffData = []; // Array ini akan selalu diisi oleh listener real-time
     let currentFilter = 'all';
 
     // --- DOM ELEMENT SELECTION ---
@@ -39,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return `${years} Thn ${months} Bln`;
     }
 
-    // --- FUNGSI RENDER UTAMA ---
+    // --- FUNGSI RENDER UTAMA (Tidak banyak berubah) ---
     function updateDashboard() {
         const totals = {
             cs: staffData.filter(s => s.jabatan.toLowerCase() === 'cs' && s.status === 'aktif').length,
@@ -82,6 +86,19 @@ document.addEventListener('DOMContentLoaded', function() {
     function openModal(modal) { modal.classList.remove('hidden'); }
     function closeModal(modal) { modal.classList.add('hidden'); }
 
+    // --- [PERUBAHAN 2] LISTENER REAL-TIME DARI DATABASE ---
+    db.collection("staff").onSnapshot((querySnapshot) => {
+        let freshData = [];
+        querySnapshot.forEach((doc) => {
+            // Menggabungkan data dari server dengan ID uniknya
+            freshData.push({ id: doc.id, ...doc.data() });
+        });
+        staffData = freshData; // Update data lokal dengan data dari server
+        console.log("Data baru dari server diterima. Memperbarui tampilan...");
+        updateDashboard(); // Perbarui seluruh tampilan
+    });
+
+    // --- EVENT LISTENERS (Logika Modal diubah) ---
     menuLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
@@ -99,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     tableBody.addEventListener('click', (e) => {
         if (e.target.matches('.action-btn')) {
-            const staffId = parseInt(e.target.getAttribute('data-id'));
+            const staffId = e.target.getAttribute('data-id');
             const staff = staffData.find(s => s.id === staffId);
             if (staff) {
                 document.getElementById('edit-staff-id').value = staff.id;
@@ -114,9 +131,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // --- [PERUBAHAN 3] LOGIKA MODAL UNTUK BERBICARA DENGAN FIREBASE ---
     document.getElementById('save-new-staff-btn').addEventListener('click', () => {
         const newStaff = {
-            id: staffData.length > 0 ? Math.max(...staffData.map(s => s.id)) + 1 : 1,
             nama: document.getElementById('add-nama').value,
             passport: document.getElementById('add-passport').value,
             jabatan: document.getElementById('add-jabatan').value,
@@ -128,44 +145,45 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!newStaff.nama || !newStaff.passport || !newStaff.email || !newStaff.tanggal_bergabung || !newStaff.last_admin) {
             alert("Harap isi semua field."); return;
         }
-        staffData.push(newStaff);
-        saveDataToLocalStorage();
-        closeModal(addModal);
-        updateDashboard();
+        
+        // Kirim data ke Firebase, bukan ke array lokal lagi
+        db.collection("staff").add(newStaff).then(() => {
+            console.log("Data berhasil ditambahkan ke server");
+            closeModal(addModal);
+        }).catch(error => console.error("Error menambah data: ", error));
     });
     document.getElementById('cancel-add-btn').addEventListener('click', () => closeModal(addModal));
     document.getElementById('close-add-modal').addEventListener('click', () => closeModal(addModal));
 
     document.getElementById('save-changes-btn').addEventListener('click', () => {
-        const staffId = parseInt(document.getElementById('edit-staff-id').value);
-        const staffIndex = staffData.findIndex(s => s.id === staffId);
-        if (staffIndex > -1) {
-            staffData[staffIndex].nama = document.getElementById('edit-nama').value;
-            staffData[staffIndex].passport = document.getElementById('edit-passport').value;
-            staffData[staffIndex].jabatan = document.getElementById('edit-jabatan').value;
-            staffData[staffIndex].email = document.getElementById('edit-email').value;
-            staffData[staffIndex].tanggal_bergabung = document.getElementById('edit-tanggal-bergabung').value;
-            staffData[staffIndex].last_admin = document.getElementById('edit-admin').value;
-        }
-        saveDataToLocalStorage();
-        closeModal(editModal);
-        updateDashboard();
+        const staffId = document.getElementById('edit-staff-id').value;
+        const updatedData = {
+            nama: document.getElementById('edit-nama').value,
+            passport: document.getElementById('edit-passport').value,
+            jabatan: document.getElementById('edit-jabatan').value,
+            email: document.getElementById('edit-email').value,
+            tanggal_bergabung: document.getElementById('edit-tanggal-bergabung').value,
+            last_admin: document.getElementById('edit-admin').value,
+        };
+        
+        // Update data di Firebase berdasarkan ID
+        db.collection("staff").doc(staffId).update(updatedData).then(() => {
+            console.log("Data berhasil diupdate di server");
+            closeModal(editModal);
+        }).catch(error => console.error("Error mengupdate data: ", error));
     });
+
+    // FUNGSI BARU: Hapus Data
+    document.getElementById('delete-staff-btn').addEventListener('click', () => {
+        const staffId = document.getElementById('edit-staff-id').value;
+        if (confirm("Apakah Anda yakin ingin menghapus staff ini?")) {
+            db.collection("staff").doc(staffId).delete().then(() => {
+                console.log("Data berhasil dihapus dari server");
+                closeModal(editModal);
+            }).catch(error => console.error("Error menghapus data: ", error));
+        }
+    });
+
     document.getElementById('cancel-edit-btn').addEventListener('click', () => closeModal(editModal));
     document.getElementById('close-edit-modal').addEventListener('click', () => closeModal(editModal));
-
-    // --- [LOGIKA BARU] SINKRONISASI ANTAR TAB ---
-    window.addEventListener('storage', function(event) {
-        // Cek apakah data yang berubah adalah data staff kita
-        if (event.key === 'togelupStaffData') {
-            console.log("Perubahan terdeteksi dari tab lain, memuat ulang data...");
-            // Muat ulang data dari localStorage yang baru
-            staffData = loadDataFromLocalStorage();
-            // Perbarui tampilan di tab ini
-            updateDashboard();
-        }
-    });
-
-    // --- INITIAL RENDER ---
-    updateDashboard();
 });
